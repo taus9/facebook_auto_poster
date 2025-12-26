@@ -24,7 +24,11 @@ This project fetches recent arrest records from a public API and posts individua
 2. Activate the virtual environment (`source .venv/bin/activate`) or use the provided interpreter path.
 3. Run the scheduled poster:
    ```bash
-   python facebook_auto_poster.py
+   python3 facebook_auto_poster.py
+   ```
+   Or as a service:
+   ```bash
+   nohup python3 facebook_auto_poster.py &
    ```
 
 ## Logging
