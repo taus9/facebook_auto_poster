@@ -14,7 +14,6 @@ class FacebookAutoPoster:
         arrests_api_url: str,
         http_timeout: int = 15,
         post_delay: int = 2,
-        max_posts: int = 20,
         http_session: Optional[requests.Session] = None,
     ):
         """Initialize the Facebook Auto Poster"""
@@ -23,7 +22,7 @@ class FacebookAutoPoster:
         self.arrests_api_url = arrests_api_url
         self.http_timeout = http_timeout
         self.post_delay = post_delay
-        self.max_posts = max_posts if max_posts and max_posts > 0 else 3
+        self.max_posts = 20
         self.http = http_session or requests.Session()
         logging.info("Facebook Auto Poster initialized")
 
