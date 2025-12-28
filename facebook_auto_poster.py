@@ -149,8 +149,8 @@ def post_to_page(page_id, access_token, message: str, booking_number: str, image
 def save_new_batch(new_batch: list[str]):
     batch_str = ",".join(new_batch)
     with open("last_batch.csv", "a") as file:
-        file.write(",")
         file.write(batch_str)
+        file.write(",")
 
 
 def main():
