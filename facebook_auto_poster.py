@@ -3,18 +3,10 @@
 Facebook Auto Poster
 """
 
-#import time
-import logging
 import os
+import logging
 
-#import schedule
 from dotenv import load_dotenv
-
-#from facebook_auto_poster_service import FacebookAutoPoster
-
-
-# Load environment variables
-load_dotenv()
 
 # Configure logging
 logging.basicConfig(
@@ -26,40 +18,53 @@ logging.basicConfig(
     ]
 )
 
+def load_config() -> dict:
+    """Load environment variables. Throws exception if required variables are not found."""
+    load_dotenv()
+
+    page_access_token = os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN")
+    page_id = os.getenv("FACEBOOK_PAGE_ID")
+    arrests_api_url = os.getenv("ARRESTS_API_URL")
+
+    if not page_access_token or not page_id:
+        raise Exception("Missing required Facebook credentials")
+        #logging.error("Missing required Facebook credentials. Check your .env file.")
+    
+    if not arrests_api_url:
+        raise Exception("Missing arrest api URL")
+    
+    return {
+        "page_access_token": page_access_token,
+        "page_id": page_id,
+        "arrests_api_url": arrests_api_url,
+    }
+
 def load_last_batch() -> list[str]:
-    """Loads last_batch.csv and returns contents. If file not found returns an empty list[str]"""
+    """Load last_batch.csv and returns contents. If file not found returns an empty list[str]"""
     batch = []
     try:
         with open("last_batch.csv", "r") as file:
             content = file.read()
             batch = content.split(",")
-            logging.info("last_batch.csv successfully loaded")
         return batch
     except FileNotFoundError:
-        logging.info("last_batch.csv not found")
         return batch
+    except:
+        raise
 
 def main():
     """Main function to run the auto poster"""
-    page_access_token = os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN")
-    page_id = os.getenv("FACEBOOK_PAGE_ID")
-    post_time = os.getenv("POST_TIME", "09:00")
-    arrests_api_url = os.getenv("ARRESTS_API_URL", "")
-
-    if not page_access_token or not page_id:
-        logging.error("Missing required Facebook credentials. Check your .env file.")
-        return
-
- #   poster = FacebookAutoPoster(
- #       access_token=page_access_token,
- #       page_id=page_id,
- #       arrests_api_url=arrests_api_url
- #   )
-    
- #   schedule.every().day.at(post_time).do(poster.scheduled_post)
-
     logging.info("Facebook Auto Poster started")
-    last_batch = load_last_batch()
+    try:
+        config = load_config()
+        logging.info("config loaded successfully...")
+
+        last_batch = load_last_batch()
+        logging.info("last_batch.csv successfully loaded...")
+        
+    except Exception as e:
+        logging.error(e)
+
 
 if __name__ == "__main__":
     main()
