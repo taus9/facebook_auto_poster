@@ -28,6 +28,7 @@ def load_config() -> dict:
     page_access_token = os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN")
     page_id = os.getenv("FACEBOOK_PAGE_ID")
     arrests_api_url = os.getenv("ARRESTS_API_URL")
+    mugs_booking_url = os.getenv("MUGS_BOOKING_URL")
 
     if not page_access_token or not page_id:
         raise Exception("Missing required Facebook credentials")
@@ -36,10 +37,14 @@ def load_config() -> dict:
     if not arrests_api_url:
         raise Exception("Missing arrest api URL")
     
+    if not mugs_booking_url:
+        raise Exception("Missing mugs booking URL")
+    
     return {
         "page_access_token": page_access_token,
         "page_id": page_id,
         "arrests_api_url": arrests_api_url,
+        "mugs_booking_url": mugs_booking_url
     }
 
 def load_last_batch() -> list[str]:
@@ -57,7 +62,7 @@ def load_last_batch() -> list[str]:
 
 def fetch_recent_arrest(url: str):
     """Retrieve the latest arrest records from the external API"""
-    response = requests.get(url, timeout=10)
+    response = requests.get(url, timeout=15)
     response.raise_for_status()
     
     arrests = response.json()
@@ -82,7 +87,7 @@ def remove_duplicate(arrests, last_batch):
 
     return new_list
 
-def build_post_message(arrest: dict[str, any]) -> str:
+def build_post_message(arrest: dict[str, any], mugs_booking_url: str) -> str:
         """Compose the Facebook post message for an individual record"""
         booking_date_full = arrest["bookingDate"]
         
@@ -106,7 +111,9 @@ def build_post_message(arrest: dict[str, any]) -> str:
         else:
             full_name = f"{given_name} {middle_name} {sur_name}"
 
-        return f"Name: {full_name}\nAge: {age}\nBooked: {f_booking_date}"
+        booking_url = f"{mugs_booking_url}{arrest["bookingNumber"]}"
+
+        return f"Name: {full_name}\nAge: {age}\nBooked: {f_booking_date}\n\nWhat did they do?? Follow the link for more details.\n{booking_url}"
 
 def post_to_page(page_id, access_token, message: str, booking_number: str, image: str):
         """Post content to the Facebook page"""
@@ -139,6 +146,13 @@ def post_to_page(page_id, access_token, message: str, booking_number: str, image
             logging.error(f"Error posting to Facebook: {str(e)}")
             raise
 
+def save_new_batch(new_batch: list[str]):
+    batch_str = ",".join(new_batch)
+    with open("last_batch.csv", "a") as file:
+        file.write(",")
+        file.write(batch_str)
+
+
 def main():
     """Main function to run the auto poster"""
     logging.info("Facebook Auto Poster started")
@@ -160,9 +174,10 @@ def main():
         arrests = remove_duplicate(arrests, last_batch)
 
         index = 1
+        new_batch = []
         for a in arrests:
             logging.info(f"attempting to post arrest {index} out of {len(arrests)}...")
-            message = build_post_message(a)
+            message = build_post_message(a, config["mugs_booking_url"])
             post_to_page(
                 config["page_id"], 
                 config["page_access_token"],
@@ -170,8 +185,12 @@ def main():
                 a["bookingNumber"],
                 a["image"] 
             )
+            new_batch.append(a["bookingNumber"])
             index = index + 1
 
+        save_new_batch(new_batch)
+        logging.info("new batch of arrests saved...")
+        logging.info("done")        
     except Exception as e:
         logging.error(e)
 
