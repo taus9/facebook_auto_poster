@@ -188,8 +188,10 @@ def main():
             new_batch.append(a["bookingNumber"])
             index = index + 1
 
-        save_new_batch(new_batch)
-        logging.info("new batch of arrests saved...")
+        if len(new_batch) != 0:
+            save_new_batch(new_batch)
+            logging.info("new batch of arrests saved...")
+
         logging.info("done")        
     except Exception as e:
         logging.error(e)
