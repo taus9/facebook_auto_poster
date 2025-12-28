@@ -3,9 +3,12 @@
 Facebook Auto Poster
 """
 
+import base64
 import os
 import logging
+import requests
 
+from datetime import datetime
 from dotenv import load_dotenv
 
 # Configure logging
@@ -52,6 +55,90 @@ def load_last_batch() -> list[str]:
     except:
         raise
 
+def fetch_recent_arrest(url: str):
+    """Retrieve the latest arrest records from the external API"""
+    response = requests.get(url, timeout=10)
+    response.raise_for_status()
+    
+    arrests = response.json()
+
+    return arrests
+
+def remove_no_image(arrests):
+    """Removes all arrests that do not have an image"""
+    new_list = []
+    for a in arrests:
+        if a["image"]:
+            new_list.append(a)
+
+    return new_list
+
+def remove_duplicate(arrests, last_batch):
+    """Removes any arrests that may have already been posted"""
+    new_list = []
+    for a in arrests:
+        if a["bookingNumber"] not in last_batch:
+            new_list.append(a)
+
+    return new_list
+
+def build_post_message(arrest: dict[str, any]) -> str:
+        """Compose the Facebook post message for an individual record"""
+        booking_date_full = arrest["bookingDate"]
+        
+        date_format = '%Y-%m-%d %H:%M:%S.%f'
+        booking_date = datetime.strptime(booking_date_full, date_format)
+        f_booking_date = booking_date.strftime('%m-%d-%Y %I:%M %p')
+
+        given_name = arrest["givenName"]
+        middle_name = arrest["middleName"]
+        sur_name = arrest["surName"]
+
+        birth_date_full = arrest["birthDate"]
+        birth_date = datetime.strptime(birth_date_full, date_format)
+
+        current_date = datetime.now()
+        age = current_date.year - birth_date.year
+
+        full_name = ""
+        if not middle_name:
+            full_name = f"{given_name} {sur_name}"
+        else:
+            full_name = f"{given_name} {middle_name} {sur_name}"
+
+        return f"Name: {full_name}\nAge: {age}\nBooked: {f_booking_date}"
+
+def post_to_page(page_id, access_token, message: str, booking_number: str, image: str):
+        """Post content to the Facebook page"""
+        try:
+            url = f'https://graph.facebook.com/v24.0/{page_id}/photos'
+            image_bytes = base64.b64decode(image)
+
+            files = {
+                'source': (f'{booking_number}.jpg', image_bytes, 'image/jpeg')
+            }
+
+            data = {
+                'caption': message,
+                'access_token': access_token
+            }
+
+            response = requests.post(url, files=files, data=data, timeout=15)
+            response.raise_for_status()
+
+            try:
+                payload = response.json()
+            except ValueError:
+                payload = {}
+
+            post_id = payload.get('id') if isinstance(payload, dict) else None
+            logging.info("Successfully posted to Facebook. Post ID: %s", post_id or 'N/A')
+            return payload
+
+        except Exception as e:
+            logging.error(f"Error posting to Facebook: {str(e)}")
+            raise
+
 def main():
     """Main function to run the auto poster"""
     logging.info("Facebook Auto Poster started")
@@ -61,7 +148,30 @@ def main():
 
         last_batch = load_last_batch()
         logging.info("last_batch.csv successfully loaded...")
-        
+
+        logging.info("attempting to fetch recent arrests...")
+        arrests = fetch_recent_arrest(config["arrests_api_url"])
+        logging.info(f"successfully retrieved {len(arrests)} arrest(s)...")
+
+        logging.info("removing arrests with no image...")
+        arrests = remove_no_image(arrests)
+
+        logging.info("removing duplicate posts...")
+        arrests = remove_duplicate(arrests, last_batch)
+
+        index = 1
+        for a in arrests:
+            logging.info(f"attempting to post arrest {index} out of {len(arrests)}...")
+            message = build_post_message(a)
+            post_to_page(
+                config["page_id"], 
+                config["page_access_token"],
+                message,
+                a["bookingNumber"],
+                a["image"] 
+            )
+            index = index + 1
+
     except Exception as e:
         logging.error(e)
 
