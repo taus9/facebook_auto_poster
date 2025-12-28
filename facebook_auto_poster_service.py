@@ -14,7 +14,7 @@ class FacebookAutoPoster:
         arrests_api_url: str,
         http_timeout: int = 15,
         post_delay: int = 2,
-        max_posts: int = 25,
+        max_posts: int = 20,
         http_session: Optional[requests.Session] = None,
     ):
         """Initialize the Facebook Auto Poster"""
