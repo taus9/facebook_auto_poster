@@ -104,7 +104,7 @@ def build_post_message(arrest: dict[str, any], mugs_booking_url: str) -> str:
 
         current_date = datetime.now()
         age = current_date.year - birth_date.year
-
+    
         full_name = ""
         if not middle_name:
             full_name = f"{given_name} {sur_name}"
@@ -118,7 +118,7 @@ def build_post_message(arrest: dict[str, any], mugs_booking_url: str) -> str:
 def post_to_page(page_id, access_token, message: str, booking_number: str, image: str):
         """Post content to the Facebook page"""
         try:
-            url = f'https://graph.facebook.com/v24.0/{page_id}/photos'
+            photo_url = f'https://graph.facebook.com/v24.0/{page_id}/photos'
             image_bytes = base64.b64decode(image)
 
             files = {
@@ -126,11 +126,11 @@ def post_to_page(page_id, access_token, message: str, booking_number: str, image
             }
 
             data = {
-                'caption': message,
+                'published': 'false',
                 'access_token': access_token
             }
 
-            response = requests.post(url, files=files, data=data, timeout=15)
+            response = requests.post(photo_url, files=files, data=data, timeout=15)
             response.raise_for_status()
 
             try:
@@ -138,7 +138,25 @@ def post_to_page(page_id, access_token, message: str, booking_number: str, image
             except ValueError:
                 payload = {}
 
-            post_id = payload.get('id') if isinstance(payload, dict) else None
+            photo_id = payload.get('id') if isinstance(payload, dict) else None
+            feed_url = f'https://graph.facebook.com/v24.0/{page_id}/feed'
+            data = {
+                'message': message,
+                'attached_media[0]': '{"media_fbid":"' + photo_id + '"}',
+                'access_token': access_token
+            }
+
+
+            response = requests.post(feed_url, data=data)
+            response.raise_for_status()
+
+            try:
+                payload = response.json()
+            except ValueError:
+                payload = {}
+
+            #post_id = payload["post_id"]
+            post_id = "xxx"
             logging.info("Successfully posted to Facebook. Post ID: %s", post_id or 'N/A')
             return payload
 
