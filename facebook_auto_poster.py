@@ -205,6 +205,7 @@ def main():
             )
             new_batch.append(a["bookingNumber"])
             index = index + 1
+            break
 
         if len(new_batch) != 0:
             save_new_batch(new_batch)
