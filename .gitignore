@@ -32,6 +32,3 @@ pytest.cache/
 # OS-specific
 .DS_Store
 Thumbs.db
-
-# Logs
-*.log
