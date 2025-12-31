@@ -12,246 +12,219 @@ from pathlib import Path
 from datetime import datetime
 from dotenv import load_dotenv
 
+
+LOG_NEW = Path("facebook_poster.log")
+LOG_OLD = Path("facebook_poster_old.log")
+BATCH_FILE = Path("last_batch.csv")
+
+
 def rotate_logs():
-    new_log = Path("facebook_poster.log")
-    old_log = Path("facebook_poster_old.log")
+    LOG_OLD.unlink(missing_ok=True)
+    if LOG_NEW.is_file():
+        LOG_NEW.rename(LOG_OLD)
 
-    old_log.unlink(missing_ok=True)
-
-    if new_log.is_file():
-        new_log.rename(old_log.name)
 
 def init_logger():
+    # If you ever call init_logger() more than once in the same process,
+    # basicConfig won't reconfigure unless you pass force=True (py3.8+).
     logging.basicConfig(
         level=logging.INFO,
         format="(%(levelname)s) [%(asctime)s] %(message)s",
         handlers=[
-            logging.FileHandler("facebook_poster.log"),
+            logging.FileHandler(LOG_NEW),
             logging.StreamHandler()
         ]
     )
-        
-def load_config():
-    """Load environment variables. Throws exception if required variables are not found."""
+
+
+def load_config() -> dict:
+    """Load environment variables. Throws if required variables are not found."""
     load_dotenv()
 
-    page_access_token = os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN")
-    page_id = os.getenv("FACEBOOK_PAGE_ID")
-    arrests_api_url = os.getenv("ARRESTS_API_URL")
-    mugs_booking_url = os.getenv("MUGS_BOOKING_URL")
-
-    if not page_access_token or not page_id:
-        raise Exception("Missing required Facebook credentials")
-        #logging.error("Missing required Facebook credentials. Check your .env file.")
-    
-    if not arrests_api_url:
-        raise Exception("Missing arrest api URL")
-    
-    if not mugs_booking_url:
-        raise Exception("Missing mugs booking URL")
-    
-    return {
-        "page_access_token": page_access_token,
-        "page_id": page_id,
-        "arrests_api_url": arrests_api_url,
-        "mugs_booking_url": mugs_booking_url
+    config = {
+        "page_access_token": os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN"),
+        "page_id": os.getenv("FACEBOOK_PAGE_ID"),
+        "arrests_api_url": os.getenv("ARRESTS_API_URL"),
+        "mugs_booking_url": os.getenv("MUGS_BOOKING_URL"),
     }
 
-def load_last_batch():
-    """Load last_batch.csv and returns contents. If file not found returns an empty list[str]"""
-    batch = []
-    try:
-        with open("last_batch.csv", "r") as file:
-            content = file.read()
-            batch = content.split(",")
-        return batch
-    except FileNotFoundError:
-        return batch
-    except:
-        raise
+    missing = [k for k, v in config.items() if not v]
+    if missing:
+        raise Exception(f"Missing required env vars: {', '.join(missing)}")
 
-def fetch_recent_arrest(url):
+    return config
+
+
+def load_last_batch() -> list[str]:
+    """Load last_batch.csv contents. If file not found returns an empty list."""
+    if not BATCH_FILE.exists():
+        return []
+
+    content = BATCH_FILE.read_text().strip()
+    if not content:
+        return []
+
+    # Split + remove empty strings (handles trailing commas safely)
+    return [x for x in content.split(",") if x]
+
+
+def fetch_recent_arrest(url: str) -> list[dict]:
     """Retrieve the latest arrest records from the external API"""
     response = requests.get(url, timeout=15)
     response.raise_for_status()
-    
-    arrests = response.json()
+    return response.json()
 
-    return arrests
 
-def remove_no_image(arrests):
+def remove_no_image(arrests: list[dict]) -> list[dict]:
     """Removes all arrests that do not have an image"""
-    new_list = []
-    for a in arrests:
-        if a["image"]:
-            new_list.append(a)
+    return [a for a in arrests if a.get("image")]
 
-    return new_list
 
-def remove_duplicate(arrests, last_batch):
+def remove_duplicate(arrests: list[dict], last_batch: list[str]) -> list[dict]:
     """Removes any arrests that may have already been posted"""
-    new_list = []
-    for a in arrests:
-        if a["bookingNumber"] not in last_batch:
-            new_list.append(a)
+    last = set(last_batch)
+    return [a for a in arrests if a.get("bookingNumber") not in last]
 
-    return new_list
 
-def post_all_arrests(arrests, config):
-        index = 1
-        new_batch = []
-        for a in arrests:
-            logging.info(f"attempting to post arrest {index} out of {len(arrests)}...")
-            message = build_post_message(a, config["mugs_booking_url"])
-            post_to_page(
-               config["page_id"], 
-                config["page_access_token"],
-                message,
-                a["bookingNumber"],
-                a["image"] 
-            )
-            new_batch.append(a["bookingNumber"])
-            index = index + 1
-            
-        return new_batch
+def post_all_arrests(arrests: list[dict], config: dict) -> list[str]:
+    new_batch: list[str] = []
+    total = len(arrests)
 
-def build_post_message(arrest, mugs_booking_url):
-        """Compose the Facebook post message for an individual record"""
-        booking_date_full = arrest["bookingDate"]
+    for idx, a in enumerate(arrests, start=1):
+        logging.info("attempting to post arrest %s out of %s...", idx, total)
+
+        message = build_post_message(a, config["mugs_booking_url"])
+        post_to_page(
+            config["page_id"],
+            config["page_access_token"],
+            message,
+            a["bookingNumber"],
+            a["image"],
+        )
+        new_batch.append(a["bookingNumber"])
         
-        date_format = '%Y-%m-%d %H:%M:%S.%f'
-        booking_date = datetime.strptime(booking_date_full, date_format)
-        f_booking_date = booking_date.strftime('%m-%d-%Y %I:%M %p')
-
-        given_name = arrest["givenName"]
-        middle_name = arrest["middleName"]
-        sur_name = arrest["surName"]
-
-        birth_date_full = arrest["birthDate"]
-        birth_date = datetime.strptime(birth_date_full, date_format)
-
-        current_date = datetime.now()
-        age = current_date.year - birth_date.year
-    
-        full_name = ""
-        if not middle_name:
-            full_name = f"{given_name} {sur_name}"
-        else:
-            full_name = f"{given_name} {middle_name} {sur_name}"
-
-        booking_url = f"{mugs_booking_url}{arrest["bookingNumber"]}"
-
-        return f"Name: {full_name}\nAge: {age}\nBooked: {f_booking_date}\n\nWhat did they do?? Follow the link for more details.\n{booking_url}"
-
-def post_to_page(page_id, access_token, message, booking_number, image):
-        """Post content to the Facebook page"""
-        try:
-            photo_url = f'https://graph.facebook.com/v24.0/{page_id}/photos'
-            image_bytes = base64.b64decode(image)
-
-            files = {
-                'source': (f'{booking_number}.jpg', image_bytes, 'image/jpeg')
-            }
-
-            data = {
-                'published': 'false',
-                'access_token': access_token
-            }
-
-            response = requests.post(photo_url, files=files, data=data, timeout=15)
-            response.raise_for_status()
-
-            try:
-                payload = response.json()
-            except ValueError:
-                payload = {}
-
-            photo_id = payload.get('id') if isinstance(payload, dict) else None
-            feed_url = f'https://graph.facebook.com/v24.0/{page_id}/feed'
-            data = {
-                'message': message,
-                'attached_media[0]': '{"media_fbid":"' + photo_id + '"}',
-                'access_token': access_token
-            }
+    return new_batch
 
 
-            response = requests.post(feed_url, data=data)
-            response.raise_for_status()
+def _calc_age(birth_date: datetime, now: datetime) -> int:
+    years = now.year - birth_date.year
+    if (now.month, now.day) < (birth_date.month, birth_date.day):
+        years -= 1
+    return years
 
-            try:
-                payload = response.json()
-            except ValueError:
-                payload = {}
 
-            #post_id = payload["post_id"]
-            post_id = "xxx"
-            logging.info("Successfully posted to Facebook. Post ID: %s", post_id or 'N/A')
-            return payload
+def build_post_message(arrest: dict, mugs_booking_url: str) -> str:
+    """Compose the Facebook post message for an individual record"""
+    date_format = "%Y-%m-%d %H:%M:%S.%f"
 
-        except Exception as e:
-            logging.error(f"Error posting to Facebook: {str(e)}")
-            raise
+    booking_date = datetime.strptime(arrest["bookingDate"], date_format)
+    f_booking_date = booking_date.strftime("%m-%d-%Y %I:%M %p")
 
-def save_new_batch(new_batch):
-    batch_str = ",".join(new_batch)
-    with open("last_batch.csv", "w") as file:
-        file.write(batch_str)
-        file.write(",")
+    given_name = arrest.get("givenName", "").strip()
+    middle_name = (arrest.get("middleName") or "").strip()
+    sur_name = arrest.get("surName", "").strip()
+
+    birth_date = datetime.strptime(arrest["birthDate"], date_format)
+    age = _calc_age(birth_date, datetime.now())
+
+    if middle_name:
+        full_name = f"{given_name} {middle_name} {sur_name}".strip()
+    else:
+        full_name = f"{given_name} {sur_name}".strip()
+
+    booking_number = arrest["bookingNumber"]
+    booking_url = f"{mugs_booking_url}{booking_number}"
+
+    return (
+        f"Name: {full_name}\n"
+        f"Age: {age}\n"
+        f"Booked: {f_booking_date}\n\n"
+        f"What did they do?? Follow the link for more details.\n"
+        f"{booking_url}"
+    )
+
+
+def post_to_page(page_id: str, access_token: str, message: str, booking_number: str, image: str) -> dict:
+    """Post content to the Facebook page"""
+    try:
+        photo_url = f"https://graph.facebook.com/v24.0/{page_id}/photos"
+        image_bytes = base64.b64decode(image)
+
+        files = {
+            "source": (f"{booking_number}.jpg", image_bytes, "image/jpeg")
+        }
+
+        # Upload unpublished photo
+        data = {"published": "false", "access_token": access_token}
+        r = requests.post(photo_url, files=files, data=data, timeout=15)
+        r.raise_for_status()
+        payload = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
+
+        photo_id = payload.get("id")
+        if not photo_id:
+            raise Exception(f"Facebook photo upload did not return an id. Response: {payload}")
+
+        # Create feed post with attached media
+        feed_url = f"https://graph.facebook.com/v24.0/{page_id}/feed"
+        data = {
+            "message": message,
+            "attached_media[0]": f'{{"media_fbid":"{photo_id}"}}',
+            "access_token": access_token,
+        }
+
+        r = requests.post(feed_url, data=data, timeout=15)
+        r.raise_for_status()
+        payload = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
+
+        post_id = payload.get("id") or payload.get("post_id")
+        logging.info("Successfully posted to Facebook. Post ID: %s", post_id or "N/A")
+        return payload
+
+    except Exception as e:
+        logging.error("Error posting to Facebook: %s", str(e))
+        raise
+
+
+def save_new_batch(new_batch: list[str]):
+    # No trailing comma
+    BATCH_FILE.write_text(",".join(new_batch))
 
 
 def main():
     """Main function to run the auto poster"""
-    # I try to write scripts like this in a declarative style
-    #
-    # 1. Rotate the current log to the old
-    # 2. Setup logging config
-    # 3. Load environment variables into a config dict
-    # 4. Load last batch of arrests booking numbers
-    # 5. Fetch recent arrests from public api
-    # 6. Remove arrests that don't have an image
-    # 7. Remove arrests that are found in the last batch
-    # 8. Post remaining arrests to page
-    # 9. Save new batch of arrests
-    #
     try:
+        rotate_logs()
+        init_logger()
 
-        rotate_logs() # 1
-        init_logger() # 2
-        
         logging.info("Facebook Auto Poster started")
 
-        # 3
         config = load_config()
         logging.info("config loaded successfully...")
 
-        # 4
         last_batch = load_last_batch()
         logging.info("last_batch.csv successfully loaded...")
 
         logging.info("attempting to fetch recent arrests...")
-        # 5
         arrests = fetch_recent_arrest(config["arrests_api_url"])
-        logging.info(f"successfully retrieved {len(arrests)} arrest(s)...")
+        logging.info("successfully retrieved %s arrest(s)...", len(arrests))
 
         logging.info("removing arrests with no image...")
-        # 6
         arrests = remove_no_image(arrests)
 
         logging.info("removing duplicate posts...")
-        # 7
         arrests = remove_duplicate(arrests, last_batch)
 
-        # 8
         new_batch = post_all_arrests(arrests, config)
 
-        if len(new_batch) != 0:
-            # 9
+        if new_batch:
             save_new_batch(new_batch)
             logging.info("new batch of arrests saved...")
 
-        logging.info("done")        
+        logging.info("done")
+
     except Exception as e:
-        logging.error(e)
+        logging.exception("Fatal error: %s", e)
+
 
 if __name__ == "__main__":
     main()
