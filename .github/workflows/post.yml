@@ -2,7 +2,7 @@ name: Mugs of Lee County Auto Poster
 
 on:
     schedule:
-        - cron: '0 5 * * *' # runs daily at 5:00 UTC
+        - cron: '10 1 * * *' # runs daily at 5:00 UTC
     workflow_dispatch:
 
 jobs:
@@ -22,3 +22,11 @@ jobs:
 
             - name: Run script
               run: python3 facebook_auto_poster.py
+            
+            - name: Commit and push generated files
+              run: |
+                git config user.name "github-actions[bot]"
+                git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                git add last_batch.csv facebook_poster.log facebook_poster_old.log
+                git diff --cached --quiet || git commit -m "Update last batch and rotate logs"
+                git push
