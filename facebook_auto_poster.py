@@ -215,37 +215,43 @@ def main():
     #
     try:
 
-        rotate_logs()
-        init_logger()
+        rotate_logs() # 1
+        init_logger() # 2
         
         logging.info("Facebook Auto Poster started")
 
+        # 3
         config = load_config()
         logging.info("config loaded successfully...")
 
+        # 4
         last_batch = load_last_batch()
         logging.info("last_batch.csv successfully loaded...")
 
         logging.info("attempting to fetch recent arrests...")
+        # 5
         arrests = fetch_recent_arrest(config["arrests_api_url"])
         logging.info(f"successfully retrieved {len(arrests)} arrest(s)...")
 
         logging.info("removing arrests with no image...")
+        # 6
         arrests = remove_no_image(arrests)
 
         logging.info("removing duplicate posts...")
+        # 7
         arrests = remove_duplicate(arrests, last_batch)
 
+        # 8
         new_batch = post_all_arrests(arrests, config)
 
         if len(new_batch) != 0:
+            # 9
             save_new_batch(new_batch)
             logging.info("new batch of arrests saved...")
 
         logging.info("done")        
     except Exception as e:
         logging.error(e)
-
 
 if __name__ == "__main__":
     main()
