@@ -1,35 +1,57 @@
 # Facebook Arrests Auto Poster
 
-This project fetches recent arrest records from a public API and posts individual updates to a Facebook Page on a daily schedule.
+A Python script that fetches recent arrest records from a public API and posts individual updates to the
+[Mugs of Lee County Facebook page](https://www.facebook.com/profile.php?id=61585560515914) on a schedule
+(via GitHub Actions cron).
 
-## Features
-- Loads credentials and schedule configuration from environment variables (see `.env`).
-- Retrieves arrest data from an external API, formats the details, and posts one update per record.
-- Includes logging to both stdout and a log file for auditing.
+Each Facebook post includes a link back to the public booking page on the Mugs site:
+https://mugs-site-lee.fly.dev
+
+Related repo for the site: https://github.com/taus9/mugs_site_lee
+
+## How it works
+
+1. Loads required configuration from environment variables.
+2. Fetches recent arrest records from a public API endpoint (JSON).
+3. Filters out records without images.
+4. Filters out records already posted (tracked via `last_batch.csv`).
+5. Posts each remaining record to Facebook (photo + message).
+6. Writes updated batch + logs back into the repo so the workflow can run fully on GitHub Actions.
+
+## Repo artifacts (intentional)
+
+This project commits a few generated files back into the repo:
+
+- `last_batch.csv` — tracks booking numbers posted in the last run to prevent duplicates
+- `facebook_poster.log` — most recent run logs
+- `facebook_poster_old.log` — previous run logs (rotated)
+
+This makes the automation “stateful” without needing paid storage.
+
+**Caveat:** because GitHub Actions is committing back into the same repo, the workflow must `git pull`
+(or fetch + rebase) before committing to avoid non-fast-forward push errors.
 
 ## Requirements
-- Python 3.12
-- Dependencies listed in `requirements.txt` (install with `pip install -r requirements.txt`).
-- A Facebook Page access token with permissions to publish photos.
-- Public arrests API endpoint providing JSON payloads with booking details and base64-encoded images.
 
-## Usage
-1. Create and populate a `.env` file with:
-   ```ini
-   FACEBOOK_PAGE_ACCESS_TOKEN=your_token
-   FACEBOOK_PAGE_ID=your_page_id
-   POST_TIME=09:00
-   ARRESTS_API_URL=https://www.sheriffleefl.org/public-api/bookings
-   ```
-2. Activate the virtual environment (`source .venv/bin/activate`) or use the provided interpreter path.
-3. Run the scheduled poster:
-   ```bash
-   python3 facebook_auto_poster.py
-   ```
-   Or as a service:
-   ```bash
-   nohup python3 facebook_auto_poster.py &
-   ```
+- Python 3.12
+- Dependencies in `requirements.txt` (`pip install -r requirements.txt`)
+- A Facebook Page access token with permission to publish photos
+- A public arrests API endpoint returning booking details and base64-encoded images
+
+## Configuration
+
+The script reads configuration from environment variables:
+
+- `FACEBOOK_PAGE_ACCESS_TOKEN`
+- `FACEBOOK_PAGE_ID`
+- `ARRESTS_API_URL`
+- `MUGS_BOOKING_URL`
+
+For local development you can use a `.env` file.
+For GitHub Actions, store these values in **GitHub Secrets**.
 
 ## Logging
-Outputs are written to both the console and `facebook_poster.log`, capturing successes and any errors returned by the Facebook API.
+
+Logs are written to both stdout and `facebook_poster.log`, including success messages and any errors
+returned by the Facebook API.
+
