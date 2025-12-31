@@ -112,7 +112,7 @@ def post_all_arrests(arrests, config):
             )
             new_batch.append(a["bookingNumber"])
             index = index + 1
-            break
+            
         return new_batch
 
 def build_post_message(arrest: dict[str, any], mugs_booking_url: str) -> str:
