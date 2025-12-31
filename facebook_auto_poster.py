@@ -8,19 +8,29 @@ import os
 import logging
 import requests
 
+from pathlib import Path
 from datetime import datetime
 from dotenv import load_dotenv
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="(%(levelname)s)  [%(asctime)s]  %(message)s",
-    handlers=[
-        logging.FileHandler("facebook_poster.log"),
-        logging.StreamHandler()
-    ]
-)
+def rotate_logs():
+    new_log = Path("facebook_poster.log")
+    old_log = Path("facebook_poster_old.log")
 
+    old_log.unlink(missing_ok=True)
+
+    if new_log.is_file():
+        new_log.rename(old_log.name)
+
+def init_logger():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="(%(levelname)s) [%(asctime)s] %(message)s",
+        handlers=[
+            logging.FileHandler("facebook_poster.log"),
+            logging.StreamHandler()
+        ]
+    )
+        
 def load_config() -> dict:
     """Load environment variables. Throws exception if required variables are not found."""
     load_dotenv()
@@ -86,6 +96,24 @@ def remove_duplicate(arrests, last_batch):
             new_list.append(a)
 
     return new_list
+
+def post_all_arrests(arrests, config):
+        index = 1
+        new_batch = []
+        for a in arrests:
+            logging.info(f"attempting to post arrest {index} out of {len(arrests)}...")
+            message = build_post_message(a, config["mugs_booking_url"])
+            post_to_page(
+               config["page_id"], 
+                config["page_access_token"],
+                message,
+                a["bookingNumber"],
+                a["image"] 
+            )
+            new_batch.append(a["bookingNumber"])
+            index = index + 1
+            break
+        return new_batch
 
 def build_post_message(arrest: dict[str, any], mugs_booking_url: str) -> str:
         """Compose the Facebook post message for an individual record"""
@@ -173,8 +201,25 @@ def save_new_batch(new_batch: list[str]):
 
 def main():
     """Main function to run the auto poster"""
-    logging.info("Facebook Auto Poster started")
+    # I try to write scripts like this in a declarative style
+    #
+    # 1. Rotate the current log to the old
+    # 2. Setup logging config
+    # 3. Load environment variables into a config dict
+    # 4. Load last batch of arrests booking numbers
+    # 5. Fetch recent arrests from public api
+    # 6. Remove arrests that don't have an image
+    # 7. Remove arrests that are found in the last batch
+    # 8. Post remaining arrests to page
+    # 9. Save new batch of arrests
+    #
     try:
+
+        rotate_logs()
+        init_logger()
+        
+        logging.info("Facebook Auto Poster started")
+
         config = load_config()
         logging.info("config loaded successfully...")
 
@@ -191,21 +236,7 @@ def main():
         logging.info("removing duplicate posts...")
         arrests = remove_duplicate(arrests, last_batch)
 
-        index = 1
-        new_batch = []
-        for a in arrests:
-            logging.info(f"attempting to post arrest {index} out of {len(arrests)}...")
-            message = build_post_message(a, config["mugs_booking_url"])
-            post_to_page(
-                config["page_id"], 
-                config["page_access_token"],
-                message,
-                a["bookingNumber"],
-                a["image"] 
-            )
-            new_batch.append(a["bookingNumber"])
-            index = index + 1
-            break
+        new_batch = post_all_arrests(arrests, config)
 
         if len(new_batch) != 0:
             save_new_batch(new_batch)

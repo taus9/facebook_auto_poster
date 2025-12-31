@@ -10,15 +10,15 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout repo
-            uses: actions/checkout@v4
+              uses: actions/checkout@v4
 
             - name: Set up Python
-            uses: actions/setup-python@v5
-            with:
+              uses: actions/setup-python@v5
+              with:
                 python-version: '3.12'
 
             - name: Install deps
-            run: pip install -r requirements.txt
+              run: pip install -r requirements.txt
 
             - name: Run script
-            run: python3 facebook_auto_poster.py
+              run: python3 facebook_auto_poster.py
