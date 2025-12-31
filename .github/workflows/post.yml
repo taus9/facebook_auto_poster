@@ -2,7 +2,7 @@ name: Mugs of Lee County Auto Poster
 
 on:
     schedule:
-        - cron: '15 20 * * *' # runs daily at 5:00 UTC
+        - cron: '25 2 * * *' # runs daily at 5:00 UTC
     workflow_dispatch:
 
 jobs:
