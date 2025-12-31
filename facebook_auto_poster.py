@@ -31,7 +31,7 @@ def init_logger():
         ]
     )
         
-def load_config() -> dict:
+def load_config():
     """Load environment variables. Throws exception if required variables are not found."""
     load_dotenv()
 
@@ -57,7 +57,7 @@ def load_config() -> dict:
         "mugs_booking_url": mugs_booking_url
     }
 
-def load_last_batch() -> list[str]:
+def load_last_batch():
     """Load last_batch.csv and returns contents. If file not found returns an empty list[str]"""
     batch = []
     try:
@@ -70,7 +70,7 @@ def load_last_batch() -> list[str]:
     except:
         raise
 
-def fetch_recent_arrest(url: str):
+def fetch_recent_arrest(url):
     """Retrieve the latest arrest records from the external API"""
     response = requests.get(url, timeout=15)
     response.raise_for_status()
@@ -115,7 +115,7 @@ def post_all_arrests(arrests, config):
             
         return new_batch
 
-def build_post_message(arrest: dict[str, any], mugs_booking_url: str) -> str:
+def build_post_message(arrest, mugs_booking_url):
         """Compose the Facebook post message for an individual record"""
         booking_date_full = arrest["bookingDate"]
         
@@ -143,7 +143,7 @@ def build_post_message(arrest: dict[str, any], mugs_booking_url: str) -> str:
 
         return f"Name: {full_name}\nAge: {age}\nBooked: {f_booking_date}\n\nWhat did they do?? Follow the link for more details.\n{booking_url}"
 
-def post_to_page(page_id, access_token, message: str, booking_number: str, image: str):
+def post_to_page(page_id, access_token, message, booking_number, image):
         """Post content to the Facebook page"""
         try:
             photo_url = f'https://graph.facebook.com/v24.0/{page_id}/photos'
@@ -192,7 +192,7 @@ def post_to_page(page_id, access_token, message: str, booking_number: str, image
             logging.error(f"Error posting to Facebook: {str(e)}")
             raise
 
-def save_new_batch(new_batch: list[str]):
+def save_new_batch(new_batch):
     batch_str = ",".join(new_batch)
     with open("last_batch.csv", "w") as file:
         file.write(batch_str)
