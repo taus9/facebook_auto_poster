@@ -29,9 +29,9 @@ jobs:
                 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
                 f="last_batch.csv"
                 test -f $f && git add $f
-                f="facebook_poster.log"
+                f="facebook_poster.log" 
                 test -f $f && git add $f
-                f="facebook_poster_old.log" $f
+                f="facebook_poster_old.log"
                 test -f $f && git add $f
                 git diff --cached --quiet || git commit -m "Update last batch and rotate logs"
                 git push
