@@ -3,9 +3,14 @@
 A Python script that fetches recent arrest records from a public API and posts individual updates to the
 [Mugs of Lee County Facebook page](https://www.facebook.com/profile.php?id=61585560515914) on a schedule
 (via GitHub Actions cron).
+![Mugs Facebook](screenshots/mugs_fb.png)
 
 Each Facebook post includes a link back to the public booking page on the Mugs site:
 https://mugs-site-lee.fly.dev
+![Mugs Booking](screenshots/mugs_booking.png)
+
+The homepage displays the latest arrests
+![Mugs Homepage](screenshots/mugs_home.png)
 
 Related repo for the site: https://github.com/taus9/mugs_site_lee
 
