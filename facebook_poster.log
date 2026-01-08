@@ -1,87 +1,43 @@
-(INFO) [2026-01-07 05:32:07,244] Facebook Auto Poster started
-(INFO) [2026-01-07 05:32:07,245] config loaded successfully...
-(INFO) [2026-01-07 05:32:07,245] last_batch.csv successfully loaded...
-(INFO) [2026-01-07 05:32:07,245] attempting to fetch recent arrests...
-(INFO) [2026-01-07 05:32:10,110] successfully retrieved 20 arrest(s)...
-(INFO) [2026-01-07 05:32:10,110] removing arrests with no image...
-(INFO) [2026-01-07 05:32:10,110] removing duplicate posts...
-(INFO) [2026-01-07 05:32:10,110] attempting to post arrest 1 out of 18...
-(INFO) [2026-01-07 05:32:18,350] Successfully posted to Facebook. Post ID: 954450261086351_122107809825185350
-(INFO) [2026-01-07 05:32:18,351] attempting to post arrest 2 out of 18...
-(ERROR) [2026-01-07 05:32:35,357] Error posting to Facebook: HTTPSConnectionPool(host='graph.facebook.com', port=443): Read timed out. (read timeout=15)
-(ERROR) [2026-01-07 05:32:35,357] Fatal error: HTTPSConnectionPool(host='graph.facebook.com', port=443): Read timed out. (read timeout=15)
-Traceback (most recent call last):
-  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/urllib3/connectionpool.py", line 534, in _make_request
-    response = conn.getresponse()
-               ^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/urllib3/connection.py", line 571, in getresponse
-    httplib_response = super().getresponse()
-                       ^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/http/client.py", line 1430, in getresponse
-    response.begin()
-  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/http/client.py", line 331, in begin
-    version, status, reason = self._read_status()
-                              ^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/http/client.py", line 292, in _read_status
-    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/socket.py", line 720, in readinto
-    return self._sock.recv_into(b)
-           ^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/ssl.py", line 1251, in recv_into
-    return self.read(nbytes, buffer)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/ssl.py", line 1103, in read
-    return self._sslobj.read(len, buffer)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-TimeoutError: The read operation timed out
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/requests/adapters.py", line 486, in send
-    resp = conn.urlopen(
-           ^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/urllib3/connectionpool.py", line 841, in urlopen
-    retries = retries.increment(
-              ^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/urllib3/util/retry.py", line 474, in increment
-    raise reraise(type(error), error, _stacktrace)
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/urllib3/util/util.py", line 39, in reraise
-    raise value
-  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/urllib3/connectionpool.py", line 787, in urlopen
-    response = self._make_request(
-               ^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/urllib3/connectionpool.py", line 536, in _make_request
-    self._raise_timeout(err=e, url=url, timeout_value=read_timeout)
-  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/urllib3/connectionpool.py", line 367, in _raise_timeout
-    raise ReadTimeoutError(
-urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='graph.facebook.com', port=443): Read timed out. (read timeout=15)
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "/home/runner/work/facebook_auto_poster/facebook_auto_poster/facebook_auto_poster.py", line 217, in main
-    new_batch = post_all_arrests(arrests, config)
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/facebook_auto_poster/facebook_auto_poster/facebook_auto_poster.py", line 97, in post_all_arrests
-    post_to_page(
-  File "/home/runner/work/facebook_auto_poster/facebook_auto_poster/facebook_auto_poster.py", line 175, in post_to_page
-    r = requests.post(feed_url, data=data, timeout=15)
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/requests/api.py", line 115, in post
-    return request("post", url, data=data, json=json, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/requests/api.py", line 59, in request
-    return session.request(method=method, url=url, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/requests/sessions.py", line 589, in request
-    resp = self.send(prep, **send_kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/requests/sessions.py", line 703, in send
-    r = adapter.send(request, **kwargs)
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/requests/adapters.py", line 532, in send
-    raise ReadTimeout(e, request=request)
-requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='graph.facebook.com', port=443): Read timed out. (read timeout=15)
+(INFO) [2026-01-08 05:32:10,740] Facebook Auto Poster started
+(INFO) [2026-01-08 05:32:10,741] config loaded successfully...
+(INFO) [2026-01-08 05:32:10,741] last_batch.csv successfully loaded...
+(INFO) [2026-01-08 05:32:10,741] attempting to fetch recent arrests...
+(INFO) [2026-01-08 05:32:11,848] successfully retrieved 20 arrest(s)...
+(INFO) [2026-01-08 05:32:11,848] removing arrests with no image...
+(INFO) [2026-01-08 05:32:11,848] removing duplicate posts...
+(INFO) [2026-01-08 05:32:11,848] attempting to post arrest 1 out of 17...
+(INFO) [2026-01-08 05:32:18,090] Successfully posted to Facebook. Post ID: 954450261086351_122108048115185350
+(INFO) [2026-01-08 05:32:18,090] attempting to post arrest 2 out of 17...
+(INFO) [2026-01-08 05:32:22,242] Successfully posted to Facebook. Post ID: 954450261086351_122108048175185350
+(INFO) [2026-01-08 05:32:22,243] attempting to post arrest 3 out of 17...
+(INFO) [2026-01-08 05:32:25,850] Successfully posted to Facebook. Post ID: 954450261086351_122108048241185350
+(INFO) [2026-01-08 05:32:25,851] attempting to post arrest 4 out of 17...
+(INFO) [2026-01-08 05:32:32,358] Successfully posted to Facebook. Post ID: 954450261086351_122108048343185350
+(INFO) [2026-01-08 05:32:32,359] attempting to post arrest 5 out of 17...
+(INFO) [2026-01-08 05:32:35,420] Successfully posted to Facebook. Post ID: 954450261086351_122108048415185350
+(INFO) [2026-01-08 05:32:35,421] attempting to post arrest 6 out of 17...
+(INFO) [2026-01-08 05:32:39,569] Successfully posted to Facebook. Post ID: 954450261086351_122108048499185350
+(INFO) [2026-01-08 05:32:39,570] attempting to post arrest 7 out of 17...
+(INFO) [2026-01-08 05:32:43,559] Successfully posted to Facebook. Post ID: 954450261086351_122108048631185350
+(INFO) [2026-01-08 05:32:43,560] attempting to post arrest 8 out of 17...
+(INFO) [2026-01-08 05:32:47,976] Successfully posted to Facebook. Post ID: 954450261086351_122108048697185350
+(INFO) [2026-01-08 05:32:47,977] attempting to post arrest 9 out of 17...
+(INFO) [2026-01-08 05:32:51,754] Successfully posted to Facebook. Post ID: 954450261086351_122108048763185350
+(INFO) [2026-01-08 05:32:51,755] attempting to post arrest 10 out of 17...
+(INFO) [2026-01-08 05:32:55,931] Successfully posted to Facebook. Post ID: 954450261086351_122108048841185350
+(INFO) [2026-01-08 05:32:55,932] attempting to post arrest 11 out of 17...
+(INFO) [2026-01-08 05:32:59,759] Successfully posted to Facebook. Post ID: 954450261086351_122108048919185350
+(INFO) [2026-01-08 05:32:59,760] attempting to post arrest 12 out of 17...
+(INFO) [2026-01-08 05:33:06,968] Successfully posted to Facebook. Post ID: 954450261086351_122108049075185350
+(INFO) [2026-01-08 05:33:06,969] attempting to post arrest 13 out of 17...
+(INFO) [2026-01-08 05:33:14,706] Successfully posted to Facebook. Post ID: 954450261086351_122108049195185350
+(INFO) [2026-01-08 05:33:14,707] attempting to post arrest 14 out of 17...
+(INFO) [2026-01-08 05:33:17,998] Successfully posted to Facebook. Post ID: 954450261086351_122108049267185350
+(INFO) [2026-01-08 05:33:17,999] attempting to post arrest 15 out of 17...
+(INFO) [2026-01-08 05:33:22,653] Successfully posted to Facebook. Post ID: 954450261086351_122108049345185350
+(INFO) [2026-01-08 05:33:22,654] attempting to post arrest 16 out of 17...
+(INFO) [2026-01-08 05:33:27,478] Successfully posted to Facebook. Post ID: 954450261086351_122108049435185350
+(INFO) [2026-01-08 05:33:27,480] attempting to post arrest 17 out of 17...
+(INFO) [2026-01-08 05:33:32,244] Successfully posted to Facebook. Post ID: 954450261086351_122108049507185350
+(INFO) [2026-01-08 05:33:32,245] new batch of arrests saved...
+(INFO) [2026-01-08 05:33:32,245] done
