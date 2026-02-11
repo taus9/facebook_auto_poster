@@ -1,21 +1,78 @@
-(INFO) [2026-02-10 06:13:33,664] Facebook Auto Poster started
-(INFO) [2026-02-10 06:13:33,665] config loaded successfully...
-(INFO) [2026-02-10 06:13:33,665] last_batch.csv successfully loaded...
-(INFO) [2026-02-10 06:13:33,665] attempting to fetch recent arrests...
-(INFO) [2026-02-10 06:13:34,566] successfully retrieved 20 arrest(s)...
-(INFO) [2026-02-10 06:13:34,567] removing arrests with no image...
-(INFO) [2026-02-10 06:13:34,567] removing duplicate posts...
-(INFO) [2026-02-10 06:13:34,567] attempting to post arrest 1 out of 18...
-(ERROR) [2026-02-10 06:13:34,696] Error posting to Facebook: 400 Client Error: Bad Request for url: https://graph.facebook.com/v24.0/954450261086351/photos
-(ERROR) [2026-02-10 06:13:34,696] Fatal error: 400 Client Error: Bad Request for url: https://graph.facebook.com/v24.0/954450261086351/photos
+(INFO) [2026-02-11 06:10:49,387] Facebook Auto Poster started
+(INFO) [2026-02-11 06:10:49,388] config loaded successfully...
+(INFO) [2026-02-11 06:10:49,388] last_batch.csv successfully loaded...
+(INFO) [2026-02-11 06:10:49,388] attempting to fetch recent arrests...
+(ERROR) [2026-02-11 06:11:04,749] Fatal error: HTTPSConnectionPool(host='www.sheriffleefl.org', port=443): Read timed out. (read timeout=15)
 Traceback (most recent call last):
-  File "/home/runner/work/facebook_auto_poster/facebook_auto_poster/facebook_auto_poster.py", line 217, in main
-    new_batch = post_all_arrests(arrests, config)
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/facebook_auto_poster/facebook_auto_poster/facebook_auto_poster.py", line 97, in post_all_arrests
-    post_to_page(
-  File "/home/runner/work/facebook_auto_poster/facebook_auto_poster/facebook_auto_poster.py", line 160, in post_to_page
-    r.raise_for_status()
-  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/requests/models.py", line 1021, in raise_for_status
-    raise HTTPError(http_error_msg, response=self)
-requests.exceptions.HTTPError: 400 Client Error: Bad Request for url: https://graph.facebook.com/v24.0/954450261086351/photos
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/urllib3/connectionpool.py", line 534, in _make_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/urllib3/connection.py", line 571, in getresponse
+    httplib_response = super().getresponse()
+                       ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/http/client.py", line 1430, in getresponse
+    response.begin()
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/http/client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/http/client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/socket.py", line 720, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/ssl.py", line 1251, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/ssl.py", line 1103, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/requests/adapters.py", line 486, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/urllib3/connectionpool.py", line 841, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/urllib3/util/retry.py", line 490, in increment
+    raise reraise(type(error), error, _stacktrace)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/urllib3/util/util.py", line 39, in reraise
+    raise value
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/urllib3/connectionpool.py", line 787, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/urllib3/connectionpool.py", line 536, in _make_request
+    self._raise_timeout(err=e, url=url, timeout_value=read_timeout)
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/urllib3/connectionpool.py", line 367, in _raise_timeout
+    raise ReadTimeoutError(
+urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='www.sheriffleefl.org', port=443): Read timed out. (read timeout=15)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/runner/work/facebook_auto_poster/facebook_auto_poster/facebook_auto_poster.py", line 208, in main
+    arrests = fetch_recent_arrest(config["arrests_api_url"])
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/facebook_auto_poster/facebook_auto_poster/facebook_auto_poster.py", line 73, in fetch_recent_arrest
+    response = requests.get(url, timeout=15)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/requests/api.py", line 73, in get
+    return request("get", url, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/requests/api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/requests/sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/requests/adapters.py", line 532, in send
+    raise ReadTimeout(e, request=request)
+requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='www.sheriffleefl.org', port=443): Read timed out. (read timeout=15)
